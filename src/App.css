@@ -7,7 +7,12 @@ body {
 textarea:focus, input:focus{
   outline: none;
 }
-
+.rti--input{
+  font-family: "Poppins";
+}
+.react-multi-email > input{
+  font-family: "Poppins";
+}
 .image {
   height: 50px;
   width: 250px;

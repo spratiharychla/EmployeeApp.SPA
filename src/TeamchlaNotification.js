@@ -5,6 +5,7 @@ import FormGroup from "@material-ui/core/FormGroup";
 import Switch from "@material-ui/core/Switch";
 import CardHeader from "@material-ui/core/CardHeader";
 import { NotificationData } from "./FormTemplates";
+import "./App.css";
 import styles from "./styles.js";
 import Alert from "@material-ui/lab/Alert";
 import CircularProgress from "@material-ui/core/CircularProgress";
@@ -15,9 +16,13 @@ import Paper from "@material-ui/core/Paper";
 import Checkbox from "@mui/material/Checkbox";
 import ListItemText from "@mui/material/ListItemText";
 
+import { ReactMultiEmail, isEmail } from "react-multi-email";
+import "react-multi-email/dist/style.css";
+
 import { Theme, useTheme } from "@material-ui/core/styles";
 import { useRef, useState } from "react";
 import { TagsInput } from "react-tag-input-component";
+import { MultiSelect } from "react-multi-select-component";
 
 // import OutlinedInput from "@material-ui/core/OutlinedInput";
 // import MenuItem from "@material-ui/core/MenuItem";
@@ -586,28 +591,42 @@ const destinationData = [
   },
 ];
 const names = [
-  "Claim247",
-  "ClaimEmployeeMemberClaim",
-  "ClaimISMemberClaim",
-  "ClaimLeadership",
-  "ClaimSOS",
-  "ClaimOrderEquipment",
-  "ClaimISServices",
-  "ClaimISServices",
+  { label: "Claim247", value: "Claim247" },
+  { label: "ClaimEmployeeMemberClaim", value: "ClaimEmployeeMemberClaim" },
+  { label: "ClaimISMemberClaim", value: "ClaimISMemberClaim" },
+  { label: "ClaimLeadership", value: "ClaimLeadership" },
+  { label: "ClaimSOS", value: "ClaimSOS" },
+  { label: "ClaimISServices", value: "ClaimISServices" },
+  { label: "ClaimOrderEquipment", value: "ClaimOrderEquipment" },
 ];
+
+// const names = [
+//   "Claim247",
+//   "ClaimEmployeeMemberClaim",
+//   "ClaimISMemberClaim",
+//   "ClaimLeadership",
+//   "ClaimSOS",
+//   "ClaimOrderEquipment",
+//   "ClaimISServices",
+//   "ClaimISServices",
+// ];
 
 function Notification(props) {
   const buttonStyles = styles();
   const classes = useStyles();
-  const [checked, setChecked] = React.useState(true);
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+
+  const [emails, setEmails] = React.useState([]);
+  const [focused, setFocused] = React.useState(false);
+
+  const [checked, setChecked] = React.useState(false);
+  const taghandleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setChecked(event.target.checked);
-    console.log(event.target.checked);
   };
+
   const [title, setTitle] = React.useState();
   // const { authState, authService } = useOktaAuth();
   const [body, setBody] = React.useState();
-  const [url, setUrl] = React.useState("android");
+  const [url, setUrl] = React.useState("");
   const [platform, setPlatform] = React.useState("");
   const [destination, setDestination] = React.useState("");
 
@@ -616,16 +635,11 @@ function Notification(props) {
 
   const tagRef = useRef();
 
-  const handleChangeTag = (event: SelectChangeEvent<typeof TagName>) => {
-    const {
-      target: { value },
-    } = event;
-    setTagName(
-      // On autofill we get a stringified value.
-      typeof value === "string" ? value.split(",") : value
-    );
-  };
+  const [isChecked, setIsChecked] = React.useState(names.slice().fill(false));
 
+  const toggleCheckboxValue = (index, e) => {
+    setIsChecked(isChecked.map((v, i) => (i === index ? !v : v)));
+  };
   const submitHandler = (e) => {
     e.preventDefault();
     let payload = { ...NotificationData };
@@ -633,8 +647,15 @@ function Notification(props) {
     payload.body = body;
     payload.platform = platform;
     payload.destination = url;
-    payload.tag = TagName.concat(tagselected);
-    console.log("payload", payload);
+    payload.tag = [];
+    isChecked.map((data, index) => {
+      if (data == true) {
+        setTagName((current) => [...current, e]);
+        payload.tag.push(names[index].value);
+      }
+    });
+    payload.tag = payload.tag.concat(emails);
+    console.log(payload);
     // axios
     //   .post(
     //     "https://api-appdev-employeeapp-test-001.ase-eapps-prod-001.p.azurewebsites.net/api/PushNotification",
@@ -669,7 +690,7 @@ function Notification(props) {
   return (
     <div>
       <Header />
-      <div className={classes.conatainer}>
+      <div className="row m-0">
         <Paper className={classes.formdiv}>
           <form onSubmit={submitHandler} className={classes.formRoot}>
             <div className={classes.title}>
@@ -680,7 +701,7 @@ function Notification(props) {
                 fullWidth
                 className={classes.input}
                 type="text"
-                placeholder="Notification Title"
+                placeholder="Notification Subject"
                 onChange={(e) => setTitle(e.target.value)}
               />
             </div>
@@ -723,74 +744,102 @@ function Notification(props) {
             </FormGroup> */}
             {/* <div className={classes.text}>Send by Category</div> */}
             {/* {checked ? ( */}
-            <br/>
-            <div style = {{width : "100%"}}>
-              <FormControl style = {{width : "100%",margin:"0px"}} sx={{ m: 1 }}>
-                <InputLabel id="demo-multiple-checkbox-label">Select by Category</InputLabel>
-                <Select
-                  labelId="demo-multiple-checkbox-label"
-                  id="demo-multiple-checkbox"
-                  multiple
-                  value={TagName}
-                  onChange={handleChangeTag}
-                  input={<OutlinedInput label="Select by Category" />}
-                  renderValue={(selected) => selected.join(", ")}
-                  MenuProps={MenuProps}
-                >
-                  {names.map((name) => (
-                    <MenuItem key={name} value={name}>
-                      <Checkbox checked={TagName.indexOf(name) > -1} />
-                      <ListItemText primary={name} />
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              {/* <FormControl className={classes.FormControl}>
-                <Select
-                  multiple
-                  displayEmpty
-                  value={TagName}
-                  onChange={handleChangeTag}
-                  input={<OutlinedInput />}
-                  renderValue={(selected) => {
-                    if (selected.length === 0) {
-                      return <em>Select Tags</em>;
-                    }
-
-                    return selected.join(", ");
-                  }}
-                  MenuProps={MenuProps}
-                  inputProps={{ "aria-label": "Without label" }}
-                >
-                  <MenuItem disabled value="">
-                    <em>Select Tags</em>
-                  </MenuItem>
-                  {names.map((name) => (
-                    <MenuItem
-                      key={name}
-                      value={name}
-                      // style={getStyles(name, TagName, theme)}
-                    >
-                      {name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl> */}
+            <br />
+            <div>
+              <div className={classes.text}>Send by Group</div>
+              <br />
+              <div className="row">
+                <div className="col-6">
+                  {names.map((item, index) =>
+                    index < 5 ? (
+                      <React.Fragment>
+                        <MenuItem
+                          value={item.value}
+                          // selected={item.value === value}
+                          key={index}
+                        >
+                          <Checkbox
+                            key={index}
+                            checked={isChecked[index]}
+                            onClick={() =>
+                              toggleCheckboxValue(index, item.value)
+                            }
+                          ></Checkbox>
+                          <InputLabel>{item.label}</InputLabel>
+                        </MenuItem>
+                      </React.Fragment>
+                    ) : (
+                      <></>
+                    )
+                  )}
+                </div>
+                <div className="col-6">
+                  {names.map((item, index) =>
+                    index >= 5 ? (
+                      <React.Fragment>
+                        <MenuItem
+                          value={item.value}
+                          // selected={item.value === value}
+                          key={index}
+                        >
+                          <Checkbox
+                            key={index}
+                            checked={isChecked[index]}
+                            onClick={() =>
+                              toggleCheckboxValue(index, item.value)
+                            }
+                          ></Checkbox>
+                          <InputLabel>{item.label}</InputLabel>
+                        </MenuItem>
+                      </React.Fragment>
+                    ) : (
+                      <></>
+                    )
+                  )}
+                </div>
+                {/* <MultiSelect
+                options={names}
+                value={TagName}
+                onChange={setTagName}
+                labelledBy="Select by Category"
+              /> */}
+              </div>
             </div>
-            {/* // ) : ( */}
             <br />
             <div className={classes.text}>Send by Email</div>
             <br />
-            <TagsInput
+            {/* <TagsInput
               value={tagselected}
               onChange={setSelected}
+              className={classes.input}
               name="Tags"
               placeHolder="Enter Users Email"
-            />
+            /> */}
             {/* )} */}
             {/* react-tag-input__input */}
+
+            <ReactMultiEmail
+              placeholder="Enter Users Email"
+              emails={emails}
+              onChange={(_emails: string[]) => {
+                setEmails(_emails);
+              }}
+              autoFocus={true}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              getLabel={(email, index, removeEmail) => {
+                return (
+                  <div data-tag key={index}>
+                    <div data-tag-item>{email}</div>
+                    <span data-tag-handle onClick={() => removeEmail(index)}>
+                      ×
+                    </span>
+                  </div>
+                );
+              }}
+            />
             <br />
+
             {/* <InputLabel htmlFor="poi-icon">Destination</InputLabel>
             <Select
               className={classes.MuiInputBase}
