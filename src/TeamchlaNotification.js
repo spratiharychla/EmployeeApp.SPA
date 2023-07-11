@@ -591,25 +591,15 @@ const destinationData = [
   },
 ];
 const names = [
-  { label: "Claim247", value: "Claim247" },
-  { label: "ClaimEmployeeMemberClaim", value: "ClaimEmployeeMemberClaim" },
-  { label: "ClaimISMemberClaim", value: "ClaimISMemberClaim" },
-  { label: "ClaimLeadership", value: "ClaimLeadership" },
-  { label: "ClaimSOS", value: "ClaimSOS" },
-  { label: "ClaimISServices", value: "ClaimISServices" },
-  { label: "ClaimOrderEquipment", value: "ClaimOrderEquipment" },
+  { id: 1, group: "247 Member Group", claim: "Claim247" },
+  { id: 2, group: "Employee Member Group", claim: "ClaimEmployeeMemberClaim" },
+  { id: 3, group: "ISMember Group", claim: "ClaimISMemberClaim" },
+  { id: 4, group: "Leadership Group", claim: "ClaimLeadership" },
+  { id: 5, group: "SOS Group", claim: "ClaimSOS" },
+  { id: 6, group: "ISServices Group", claim: "ClaimISServices" },
+  { id: 7, group: "Order Equipment Group", claim: "ClaimOrderEquipment" },
 ];
 
-// const names = [
-//   "Claim247",
-//   "ClaimEmployeeMemberClaim",
-//   "ClaimISMemberClaim",
-//   "ClaimLeadership",
-//   "ClaimSOS",
-//   "ClaimOrderEquipment",
-//   "ClaimISServices",
-//   "ClaimISServices",
-// ];
 
 function Notification(props) {
   const buttonStyles = styles();
@@ -636,9 +626,21 @@ function Notification(props) {
   const tagRef = useRef();
 
   const [isChecked, setIsChecked] = React.useState(names.slice().fill(false));
+  const [isSelectAllChecked, setIsSelectAllChecked] = React.useState(false);
 
-  const toggleCheckboxValue = (index, e) => {
-    setIsChecked(isChecked.map((v, i) => (i === index ? !v : v)));
+  const toggleCheckboxValue = (index, e,event=undefined) => {
+    if(e === "ALL"){
+      if(event !== undefined){
+        setIsChecked(isChecked.map((v, i) => (event.target.checked)));
+        setIsSelectAllChecked(event.target.checked)
+      }
+      
+    }
+    else{
+      setIsChecked(isChecked.map((v, i) => (i === index ? !v : v)));
+      setIsSelectAllChecked(false)
+    }
+    
   };
   const submitHandler = (e) => {
     e.preventDefault();
@@ -750,11 +752,23 @@ function Notification(props) {
               <br />
               <div className="row">
                 <div className="col-6">
+                  <MenuItem
+                    value={"ALL"}
+                    // selected={item.value === value}
+                    
+                  >
+                    <Checkbox
+                      
+                      checked={isSelectAllChecked}
+                      onClick={(e) => toggleCheckboxValue(0, "ALL",e)}
+                    ></Checkbox>
+                    <InputLabel>{"Select ALL"}</InputLabel>
+                  </MenuItem>
                   {names.map((item, index) =>
                     index < 5 ? (
                       <React.Fragment>
                         <MenuItem
-                          value={item.value}
+                          value={item.claim}
                           // selected={item.value === value}
                           key={index}
                         >
@@ -762,10 +776,10 @@ function Notification(props) {
                             key={index}
                             checked={isChecked[index]}
                             onClick={() =>
-                              toggleCheckboxValue(index, item.value)
+                              toggleCheckboxValue(index, item.claim)
                             }
                           ></Checkbox>
-                          <InputLabel>{item.label}</InputLabel>
+                          <InputLabel>{item.group}</InputLabel>
                         </MenuItem>
                       </React.Fragment>
                     ) : (
@@ -778,18 +792,18 @@ function Notification(props) {
                     index >= 5 ? (
                       <React.Fragment>
                         <MenuItem
-                          value={item.value}
+                          value={item.claim}
                           // selected={item.value === value}
                           key={index}
                         >
                           <Checkbox
                             key={index}
                             checked={isChecked[index]}
-                            onClick={() =>
-                              toggleCheckboxValue(index, item.value)
+                            onClick={(e) =>
+                              toggleCheckboxValue(index, item.claim)
                             }
                           ></Checkbox>
-                          <InputLabel>{item.label}</InputLabel>
+                          <InputLabel>{item.group}</InputLabel>
                         </MenuItem>
                       </React.Fragment>
                     ) : (

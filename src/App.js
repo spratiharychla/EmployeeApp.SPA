@@ -24,13 +24,14 @@ import Notification from "./TeamchlaNotification.js"
 // });
 
 const oktaAuth = new OktaAuth({
-  issuer: "https://chla.okta.com/oauth2/aus51wgp73YceE2Rc2p7",
+
+  issuer: "https://oktalogin.chla.org/oauth2/aus97ak2tybdIIyPP2p7",
 
   redirectUri: `${window.location.origin}/login/callback`,
 
-  clientId: "0oaeiblx83KJ8mea02p7",
+  clientId: "0oa97au7qwrDWoq4M2p7",
 
-  scopes: ["openid", "email"],
+  scopes: ["openid", "email" ,"teamchla:admin"],
 });
 function Comp(){
 
