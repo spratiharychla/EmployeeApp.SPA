@@ -11,7 +11,8 @@ import Alert from "@material-ui/lab/Alert";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import axios from "axios";
 import InputLabel from "@mui/material/InputLabel";
-
+import { useOktaAuth } from "@okta/okta-react";
+import { useEffect } from "react";
 import Paper from "@material-ui/core/Paper";
 import Checkbox from "@mui/material/Checkbox";
 import ListItemText from "@mui/material/ListItemText";
@@ -23,18 +24,11 @@ import { Theme, useTheme } from "@material-ui/core/styles";
 import { useRef, useState } from "react";
 import { TagsInput } from "react-tag-input-component";
 import { MultiSelect } from "react-multi-select-component";
-
-// import OutlinedInput from "@material-ui/core/OutlinedInput";
-// import MenuItem from "@material-ui/core/MenuItem";
-// import FormControl from "@material-ui/core/FormControl";
-// import { SelectChangeEvent } from "@material-ui/core/Select";
 import { Link } from "react-router-dom";
 import CardContent from "@material-ui/core/CardContent";
-// import { withOktaAuth } from "@okta/okta-react";
+import { withOktaAuth } from "@okta/okta-react";
 import { IconButton, Typography } from "@material-ui/core";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
-// import Origin from "../../src/Assets/origin.png";
-// import Destination from "../../src/Assets/destination.png";
 import { makeStyles } from "@material-ui/core/styles";
 import { Cancel, Tag } from "@mui/icons-material";
 
@@ -47,8 +41,6 @@ import Box from "@material-ui/core/Box";
 import { DateTimePicker } from "@material-ui/pickers";
 import { TextField, Button } from "@material-ui/core";
 import Header from "./header.js";
-
-// import { , useTheme } from '@mui/material/styles';
 import OutlinedInput from "@mui/material/OutlinedInput";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
@@ -157,6 +149,7 @@ const MenuProps = {
     },
   },
 };
+
 const destinationData = [
   {
     id: 905,
@@ -590,16 +583,6 @@ const destinationData = [
     section: "IS Team",
   },
 ];
-const names = [
-  { id: 1, group: "247 Member Group", claim: "Claim247" },
-  { id: 2, group: "Employee Member Group", claim: "ClaimEmployeeMemberClaim" },
-  { id: 3, group: "ISMember Group", claim: "ClaimISMemberClaim" },
-  { id: 4, group: "Leadership Group", claim: "ClaimLeadership" },
-  { id: 5, group: "SOS Group", claim: "ClaimSOS" },
-  { id: 6, group: "ISServices Group", claim: "ClaimISServices" },
-  { id: 7, group: "Order Equipment Group", claim: "ClaimOrderEquipment" },
-];
-
 
 function Notification(props) {
   const buttonStyles = styles();
@@ -614,68 +597,86 @@ function Notification(props) {
   };
 
   const [title, setTitle] = React.useState();
-  // const { authState, authService } = useOktaAuth();
+  const { authState, authService } = useOktaAuth();
   const [body, setBody] = React.useState();
   const [url, setUrl] = React.useState("");
   const [platform, setPlatform] = React.useState("");
   const [destination, setDestination] = React.useState("");
+  const [names, setNames] = React.useState();
+  const [isloader, setIsloader] = React.useState(true);
 
   const theme = useTheme();
   const [TagName, setTagName] = React.useState([]);
 
   const tagRef = useRef();
 
-  const [isChecked, setIsChecked] = React.useState(names.slice().fill(false));
+  const [isChecked, setIsChecked] = React.useState();
   const [isSelectAllChecked, setIsSelectAllChecked] = React.useState(false);
-
-  const toggleCheckboxValue = (index, e,event=undefined) => {
-    if(e === "ALL"){
-      if(event !== undefined){
-        setIsChecked(isChecked.map((v, i) => (event.target.checked)));
-        setIsSelectAllChecked(event.target.checked)
+  const toggleCheckboxValue = (index, e, event = undefined) => {
+    if (e === "ALL") {
+      if (event !== undefined) {
+        setIsChecked(isChecked.map((v, i) => event.target.checked));
+        setIsSelectAllChecked(event.target.checked);
       }
-      
-    }
-    else{
+    } else {
       setIsChecked(isChecked.map((v, i) => (i === index ? !v : v)));
-      setIsSelectAllChecked(false)
+      setIsSelectAllChecked(false);
     }
-    
   };
   const submitHandler = (e) => {
+    setIsloader(false);
     e.preventDefault();
     let payload = { ...NotificationData };
     payload.title = title;
     payload.body = body;
-    payload.platform = platform;
+    payload.platform = "both";
     payload.destination = url;
     payload.tag = [];
     isChecked.map((data, index) => {
       if (data == true) {
         setTagName((current) => [...current, e]);
-        payload.tag.push(names[index].value);
+        payload.tag.push(names[index].claim);
       }
     });
     payload.tag = payload.tag.concat(emails);
-    console.log(payload);
-    // axios
-    //   .post(
-    //     "https://api-appdev-employeeapp-test-001.ase-eapps-prod-001.p.azurewebsites.net/api/PushNotification",
-    //     payload,
-    //     {
-    //       headers: {
-    //         "Content-Type": "application/json",
-    //         Authorization: `Bearer ${authState.accessToken}`,
-    //       },
-    //     }
-    //   )
-    //   .then((res) => {
-    //     console.log("res", res);
-    //   })
-    //   .catch((err) => {
-    //     console.log(err.response);
-    //   });
+    axios
+      .post(
+        "https://api-appdev-employeeapp-test-001.ase-eapps-prod-001.p.azurewebsites.net/api/PushNotification",
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authState.accessToken.accessToken}`,
+          },
+        }
+      )
+      .then((res) => {
+        setIsloader(true);
+      })
+      .catch((err) => {
+      });
   };
+  async function getData() {
+    const accessToken = authState.accessToken.accessToken;
+    axios
+      .get(
+        "https://api-appdev-employeeapp-test-001.ase-eapps-prod-001.p.azurewebsites.net/api/claims",
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      )
+      .then((response) => {
+        setNames(response.data);
+        setIsChecked(response.data.slice().fill(false));
+      })
+      .catch((error) => {
+        console.log("error", error);
+      });
+  }
+
   const getOptions = () => {
     var array = [];
     for (var i = 0; i < destinationData.length; i++) {
@@ -685,9 +686,11 @@ function Notification(props) {
         </option>
       );
     }
-    console.log();
     return array;
   };
+  useEffect(() => {
+    getData();
+  }, []);
   const [tagselected, setSelected] = useState([]);
   return (
     <div>
@@ -751,86 +754,82 @@ function Notification(props) {
               <div className={classes.text}>Send by Group</div>
               <br />
               <div className="row">
-                <div className="col-6">
-                  <MenuItem
-                    value={"ALL"}
-                    // selected={item.value === value}
-                    
+                {names != undefined ? (
+                  <>
+                    <div className="col-6">
+                      <MenuItem
+                        value={"ALL"}
+                      >
+                        <Checkbox
+                          checked={isSelectAllChecked}
+                          onClick={(e) => toggleCheckboxValue(0, "ALL", e)}
+                        ></Checkbox>
+                        <InputLabel>{"Select ALL"}</InputLabel>
+                      </MenuItem>
+
+                      {names.map((item, index) =>
+                        index < 5 ? (
+                          <React.Fragment>
+                            <MenuItem
+                              value={item.claim}
+                              // selected={item.value === value}
+                              key={index}
+                            >
+                              <Checkbox
+                                key={index}
+                                checked={isChecked[index]}
+                                onClick={() =>
+                                  toggleCheckboxValue(index, item.claim)
+                                }
+                              ></Checkbox>
+                              <InputLabel>{item.group}</InputLabel>
+                            </MenuItem>
+                          </React.Fragment>
+                        ) : (
+                          <></>
+                        )
+                      )}
+                    </div>
+                    <div className="col-6">
+                      {names.map((item, index) =>
+                        index >= 5 ? (
+                          <React.Fragment>
+                            <MenuItem
+                              value={item.claim}
+                              key={index}
+                            >
+                              <Checkbox
+                                key={index}
+                                checked={isChecked[index]}
+                                onClick={() =>
+                                  toggleCheckboxValue(index, item.claim)
+                                }
+                              ></Checkbox>
+                              <InputLabel>{item.group}</InputLabel>
+                            </MenuItem>
+                          </React.Fragment>
+                        ) : (
+                          <></>
+                        )
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div
+                    class="spinner-border"
+                    style={{ margin: "auto" }}
+                    role="status"
                   >
-                    <Checkbox
-                      
-                      checked={isSelectAllChecked}
-                      onClick={(e) => toggleCheckboxValue(0, "ALL",e)}
-                    ></Checkbox>
-                    <InputLabel>{"Select ALL"}</InputLabel>
-                  </MenuItem>
-                  {names.map((item, index) =>
-                    index < 5 ? (
-                      <React.Fragment>
-                        <MenuItem
-                          value={item.claim}
-                          // selected={item.value === value}
-                          key={index}
-                        >
-                          <Checkbox
-                            key={index}
-                            checked={isChecked[index]}
-                            onClick={() =>
-                              toggleCheckboxValue(index, item.claim)
-                            }
-                          ></Checkbox>
-                          <InputLabel>{item.group}</InputLabel>
-                        </MenuItem>
-                      </React.Fragment>
-                    ) : (
-                      <></>
-                    )
-                  )}
-                </div>
-                <div className="col-6">
-                  {names.map((item, index) =>
-                    index >= 5 ? (
-                      <React.Fragment>
-                        <MenuItem
-                          value={item.claim}
-                          // selected={item.value === value}
-                          key={index}
-                        >
-                          <Checkbox
-                            key={index}
-                            checked={isChecked[index]}
-                            onClick={(e) =>
-                              toggleCheckboxValue(index, item.claim)
-                            }
-                          ></Checkbox>
-                          <InputLabel>{item.group}</InputLabel>
-                        </MenuItem>
-                      </React.Fragment>
-                    ) : (
-                      <></>
-                    )
-                  )}
-                </div>
-                {/* <MultiSelect
-                options={names}
-                value={TagName}
-                onChange={setTagName}
-                labelledBy="Select by Category"
-              /> */}
+                    <span class="sr-only"></span>
+                  </div>
+                )}
+                
               </div>
             </div>
             <br />
             <div className={classes.text}>Send by Email</div>
             <br />
-            {/* <TagsInput
-              value={tagselected}
-              onChange={setSelected}
-              className={classes.input}
-              name="Tags"
-              placeHolder="Enter Users Email"
-            /> */}
-            {/* )} */}
-            {/* react-tag-input__input */}
+
 
             <ReactMultiEmail
               placeholder="Enter Users Email"
@@ -854,40 +853,26 @@ function Notification(props) {
             />
             <br />
 
-            {/* <InputLabel htmlFor="poi-icon">Destination</InputLabel>
-            <Select
-              className={classes.MuiInputBase}
-              native
-              required
-              onChange={(e) => setDestination(e.target.value)}
-            >
-              {getOptions()}
-              <option value="url">&nbsp;URL</option>
-            </Select>
-            <br />
-            {destination == "url" ? (
-              <TextField
-                required
-                id="destination"
-                fullWidth
-                placeholder="Destination URL"
-                onChange={(e) => setUrl(e.target.value)}
-              />
-            ) : (
-              <></>
-            )} */}
             <Button
               className={buttonStyles.buttonImp}
               variant="contained"
               color="#fff"
               type="submit"
-              // style={{ marginLeft: "46%" }}
+
             >
-              {/* {loader ? (
-              <CircularProgress style={{ color: "white" }} size="1.5rem" />
-            ) : ( */}
-              Send Notification
-              {/* )} */}
+
+              {isloader == true ? (
+                "Send Notification"
+              ) : (
+                <div
+                  class="spinner-border"
+                  style={{ margin: "auto" }}
+                  role="status"
+                >
+                  <span class="sr-only"></span>
+                </div>
+              )}
+
             </Button>
           </form>
           <br />

@@ -20,6 +20,7 @@ const styles = makeStyles({
         },
         color:"white !important",
         marginLeft : "40% !Important",
+        width: "200px !Important"
       },
       buttonLateral : {
         borderRadius: "100px",
